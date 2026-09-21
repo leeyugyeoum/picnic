@@ -15,6 +15,46 @@
     <!-- Chart.js for Statistics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Firebase SDK Integration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, addDoc, getDocs, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase Configuration
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'byelnuri-fall-survey-2026';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "AIzaSyDummyKeyForFallbackOnly",
+                authDomain: "byelnuri-survey.firebaseapp.com",
+                projectId: "byelnuri-survey",
+                storageBucket: "byelnuri-survey.appspot.com",
+                messagingSenderId: "123456789",
+                appId: "1:123456789:web:abcdef"
+              };
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+
+            window.db = db;
+            window.auth = auth;
+            window.appId = appId;
+            window.addDoc = addDoc;
+            window.collection = collection;
+            window.deleteDoc = deleteDoc;
+            window.getDocs = getDocs;
+            window.doc = doc;
+            window.signInAnonymously = signInAnonymously;
+            window.signInWithCustomToken = signInWithCustomToken;
+            window.onSnapshot = onSnapshot;
+        } catch (e) {
+            console.warn("Firebase Init fallback mode active:", e);
+        }
+    </script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -172,7 +212,12 @@
                 <i class="fa-solid fa-tree"></i>
             </div>
             <div>
-                <h2 class="font-bold text-gray-900 text-lg leading-tight">국공립 별누리 어린이집</h2>
+                <div class="flex items-center gap-2">
+                    <h2 class="font-bold text-gray-900 text-lg leading-tight">국공립 별누리 어린이집</h2>
+                    <span id="cloudStatusBadge" class="text-[11px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-cloud-arrow-up text-emerald-600"></i> 실시간 동기화중
+                    </span>
+                </div>
                 <p class="text-xs text-amber-800 font-medium">2026 가을소풍 만족도 조사 시스템</p>
             </div>
         </div>
@@ -504,19 +549,89 @@
         </div>
     </div>
 
+    <!-- Confirm Action Modal (Replaces browser confirm) -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden backdrop-blur-sm p-4 no-print">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl border border-red-100 transform transition-all">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 id="confirmTitle" class="text-lg font-bold text-gray-900 mb-1">전체 초기화 확인</h3>
+            <p id="confirmMessage" class="text-xs text-gray-600 mb-5">저장된 모든 설문 응답 데이터를 삭제하시겠습니까?</p>
+            <div class="flex gap-2">
+                <button type="button" onclick="closeConfirmModal(false)" class="w-1/2 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl text-sm hover:bg-gray-200 transition-all">
+                    취소
+                </button>
+                <button type="button" onclick="closeConfirmModal(true)" class="w-1/2 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-all shadow-md">
+                    삭제 실행
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Application State
         const STORAGE_KEY = 'byelnuri_fall_picnic_survey_2026';
         const ADMIN_PASS = '2824342';
         let isAdminAuthenticated = false;
+        let firebaseSubmissions = [];
+        let confirmResolver = null;
 
         let chartAvgInstance = null;
         let chartMonthInstance = null;
 
         // Initialize on load
         window.addEventListener('DOMContentLoaded', () => {
+            initFirebaseSync();
             updateSubmissionBadge();
         });
+
+        async function initFirebaseSync() {
+            if (!window.db || !window.auth) return;
+            try {
+                // Rule 3: Auth Before Queries
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await window.signInWithCustomToken(window.auth, __initial_auth_token);
+                } else {
+                    await window.signInAnonymously(window.auth);
+                }
+
+                const user = window.auth.currentUser;
+                if (!user) return;
+
+                // Rule 1: Strict Paths - /artifacts/{appId}/public/data/submissions
+                const submissionsCol = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'submissions');
+
+                // Rule 2: Simple Query & Realtime Listener with Error Callback
+                window.onSnapshot(submissionsCol, (snapshot) => {
+                    firebaseSubmissions = [];
+                    snapshot.forEach((docSnap) => {
+                        firebaseSubmissions.push({
+                            firestoreDocId: docSnap.id,
+                            ...docSnap.data()
+                        });
+                    });
+
+                    updateSubmissionBadge();
+                    if (!document.getElementById('statsContainer').classList.contains('hidden')) {
+                        renderStatistics();
+                    }
+
+                    const badge = document.getElementById('cloudStatusBadge');
+                    if (badge) {
+                        badge.className = "text-[11px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold flex items-center gap-1";
+                        badge.innerHTML = '<i class="fa-solid fa-cloud-check text-emerald-600"></i> 실시간 서버 연동';
+                    }
+                }, (error) => {
+                    console.error("Firestore onSnapshot error:", error);
+                    const badge = document.getElementById('cloudStatusBadge');
+                    if (badge) {
+                        badge.className = "text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-bold flex items-center gap-1";
+                        badge.innerHTML = '<i class="fa-solid fa-hard-drive text-amber-700"></i> 로컬 모드';
+                    }
+                });
+            } catch (err) {
+                console.error("Firebase Sync setup failed:", err);
+            }
+        }
 
         // Request Stats view with password protection
         function requestStatsAccess() {
@@ -596,8 +711,7 @@
             }
         }
 
-        // Handle Form Submission
-        function handleFormSubmit(e) {
+        async function handleFormSubmit(e) {
             e.preventDefault();
             const form = e.target;
             const formData = new FormData(form);
@@ -637,15 +751,18 @@
                 q5_comment: formData.get('q5_comment') || ''
             };
 
-            saveSubmission(submission);
+            await saveSubmission(submission);
             form.reset();
             updateSubmissionBadge();
 
-            showModal('제출 완료', '소중한 가을소풍 만족도 의견이 성공적으로 제출되었습니다. 감사합니다!', 'fa-circle-check', 'text-green-600 bg-green-100');
+            showModal('제출 완료', '소중한 가을소풍 만족도 의견이 실시간으로 등록되었습니다. 감사합니다!', 'fa-circle-check', 'text-green-600 bg-green-100');
         }
 
-        // Local Storage Management
+        // Retrieve combined Firestore / LocalStorage submissions
         function getSubmissions() {
+            if (firebaseSubmissions && firebaseSubmissions.length > 0) {
+                return firebaseSubmissions;
+            }
             try {
                 return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             } catch (e) {
@@ -653,10 +770,21 @@
             }
         }
 
-        function saveSubmission(data) {
-            const current = getSubmissions();
-            current.push(data);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+        async function saveSubmission(data) {
+            // Local backup
+            const currentLocal = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            currentLocal.push(data);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentLocal));
+
+            // Cloud Firestore save
+            if (window.db && window.auth && window.auth.currentUser) {
+                try {
+                    const submissionsCol = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'submissions');
+                    await window.addDoc(submissionsCol, data);
+                } catch (err) {
+                    console.error("Cloud save error:", err);
+                }
+            }
         }
 
         function updateSubmissionBadge() {
@@ -664,12 +792,45 @@
             document.getElementById('submissionCountBadge').innerText = count;
         }
 
-        function clearAllSubmissions() {
-            if (confirm('저장된 모든 설문 조사 제출 데이터를 삭제하고 초기화하시겠습니까?')) {
-                localStorage.removeItem(STORAGE_KEY);
-                updateSubmissionBadge();
-                renderStatistics();
-                showModal('초기화 완료', '모든 제출 데이터가 깨끗하게 초기화되었습니다.', 'fa-circle-info', 'text-blue-600 bg-blue-100');
+        async function clearAllSubmissions() {
+            const confirmed = await customConfirm('전체 데이터 초기화', '저장된 모든 설문 제출 내역을 정말 삭제하고 초기화하시겠습니까?');
+            if (!confirmed) return;
+
+            // Clear Firestore
+            if (window.db && window.auth && window.auth.currentUser) {
+                try {
+                    const submissionsCol = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'submissions');
+                    const snapshot = await window.getDocs(submissionsCol);
+                    snapshot.forEach(async (docSnap) => {
+                        await window.deleteDoc(docSnap.ref);
+                    });
+                } catch (e) {
+                    console.error("Firestore clear error:", e);
+                }
+            }
+
+            // Clear local storage
+            localStorage.removeItem(STORAGE_KEY);
+            firebaseSubmissions = [];
+            updateSubmissionBadge();
+            renderStatistics();
+            showModal('초기화 완료', '모든 설문 제출 데이터가 깨끗하게 초기화되었습니다.', 'fa-circle-info', 'text-blue-600 bg-blue-100');
+        }
+
+        function customConfirm(title, message) {
+            return new Promise((resolve) => {
+                confirmResolver = resolve;
+                document.getElementById('confirmTitle').innerText = title;
+                document.getElementById('confirmMessage').innerText = message;
+                document.getElementById('confirmModal').classList.remove('hidden');
+            });
+        }
+
+        function closeConfirmModal(result) {
+            document.getElementById('confirmModal').classList.add('hidden');
+            if (confirmResolver) {
+                confirmResolver(result);
+                confirmResolver = null;
             }
         }
 
@@ -843,31 +1004,26 @@
             const item = list.find(s => s.id === id);
             if (!item) return;
 
-            // Fill the main survey form temporarily with item data, then trigger print
             const form = document.getElementById('surveyForm');
             form.reset();
 
-            // Set ratings
             if (form[`q1_score`]) setRadioValue('q1_score', item.q1_score);
             if (form[`q2_score`]) setRadioValue('q2_score', item.q2_score);
             if (form[`q3_score`]) setRadioValue('q3_score', item.q3_score);
             if (form[`q4_score`]) setRadioValue('q4_score', item.q4_score);
 
-            // Set inputs
             if (form['q1_reason']) form['q1_reason'].value = item.q1_reason || '';
             if (form['q2_reason']) form['q2_reason'].value = item.q2_reason || '';
             if (form['q3_reason']) form['q3_reason'].value = item.q3_reason || '';
             if (form['q4_reason']) form['q4_reason'].value = item.q4_reason || '';
             if (form['q5_comment']) form['q5_comment'].value = item.q5_comment || '';
 
-            // Set months
             if (item.q2_months && Array.isArray(item.q2_months)) {
                 form.querySelectorAll('input[name="q2_months"]').forEach(cb => {
                     if (item.q2_months.includes(cb.value)) cb.checked = true;
                 });
             }
 
-            // Switch view to survey and trigger print
             switchTab('survey');
             setTimeout(() => {
                 printCurrentSurvey();
@@ -879,7 +1035,6 @@
             if (radio) radio.checked = true;
         }
 
-        // Modal Helpers
         function showModal(title, msg, iconClass = 'fa-circle-check', iconStyle = 'text-amber-600 bg-amber-100') {
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalMessage').innerText = msg;
