@@ -23,16 +23,14 @@
 
         // Global Firebase Configuration
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'byelnuri-fall-survey-2026';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : {
-                apiKey: "AIzaSyDummyKeyForFallbackOnly",
-                authDomain: "byelnuri-survey.firebaseapp.com",
-                projectId: "byelnuri-survey",
-                storageBucket: "byelnuri-survey.appspot.com",
-                messagingSenderId: "123456789",
-                appId: "1:123456789:web:abcdef"
-              };
+        const firebaseConfig = {
+  apiKey: "AIzaSyCh4RZkcL3DlltILG0KBRTy0qjuXStKtgc",
+  authDomain: "picnic-d3a17.firebaseapp.com",
+  projectId: "picnic-d3a17",
+  storageBucket: "picnic-d3a17.firebasestorage.app",
+  messagingSenderId: "538164182795",
+  appId: "1:538164182795:web:00a9074e2ae3861b82ac0e"
+};
 
         try {
             const app = initializeApp(firebaseConfig);
