@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+/<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -18,25 +18,26 @@
     <!-- Firebase SDK Integration -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, collection, addDoc, getDocs, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // =========================================================================
-        // ★ [중요] 파이어베이스에서 발급받은 실제 설정(firebaseConfig)을 아래에 붙여넣으세요 ★
+        // ★ [중요] 파이어베이스 콘솔에서 복사한 본인의 설정값(firebaseConfig)을 아래에 넣으세요 ★
         // =========================================================================
-        const myRealFirebaseConfig = {
-            apiKey: "여기에_파이어베이스_API_KEY_입력",
-            authDomain: "내프로젝트.firebaseapp.com",
-            projectId: "내프로젝트ID",
-            storageBucket: "내프로젝트.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abcdef123456"
-        };
+        const firebaseConfig = {
+  apiKey: "AIzaSyCh4RZkcL3DlltILG0KBRTy0qjuXStKtgc",
+  authDomain: "picnic-d3a17.firebaseapp.com",
+  projectId: "picnic-d3a17",
+  storageBucket: "picnic-d3a17.firebasestorage.app",
+  messagingSenderId: "538164182795",
+  appId: "1:538164182795:web:00a9074e2ae3861b82ac0e"
+};
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'byelnuri-fall-survey-2026';
         
         // 내 실제 설정이 작성되어 있으면 우선 사용하고, 없으면 환경변수/기본값 사용
-        const firebaseConfig = (myRealFirebaseConfig.apiKey && !myRealFirebaseConfig.apiKey.includes("여기에"))
+        const isConfigValid = myRealFirebaseConfig.apiKey && !myRealFirebaseConfig.apiKey.includes("여기에");
+        const firebaseConfig = isConfigValid
             ? myRealFirebaseConfig
             : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : myRealFirebaseConfig);
 
@@ -56,8 +57,10 @@
             window.signInAnonymously = signInAnonymously;
             window.signInWithCustomToken = signInWithCustomToken;
             window.onSnapshot = onSnapshot;
+            window.isConfigValid = isConfigValid || typeof __firebase_config !== 'undefined';
         } catch (e) {
             console.warn("Firebase Init fallback mode active:", e);
+            window.isConfigValid = false;
         }
     </script>
 
@@ -234,8 +237,8 @@
             <div>
                 <div class="flex items-center gap-2">
                     <h2 class="font-bold text-gray-900 text-lg leading-tight">국공립 별누리 어린이집</h2>
-                    <span id="cloudStatusBadge" class="text-[11px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-cloud-arrow-up text-emerald-600"></i> 실시간 동기화중
+                    <span id="cloudStatusBadge" class="text-[11px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-spinner fa-spin text-amber-700"></i> 동기화 준비 중
                     </span>
                 </div>
                 <p class="text-xs text-amber-800 font-medium">2026 가을소풍 만족도 조사 시스템</p>
@@ -403,7 +406,7 @@
                                 </td>
                             </tr>
 
-                            <!-- Question 5: Other Feedback (기타의견) -->
+                            <!-- Question 5: Other Feedback -->
                             <tr class="bg-[#fdfbf7]">
                                 <td class="py-3 sm:py-4 px-1 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0] text-xs sm:text-base">
                                     기타<br>의견
@@ -513,7 +516,7 @@
             <div class="border border-gray-200 rounded-xl overflow-hidden mt-8">
                 <div class="bg-amber-100/70 border-b border-amber-200 px-4 py-3 font-bold text-gray-800 text-sm flex justify-between items-center stats-no-print">
                     <span class="flex items-center gap-2">
-                        <i class="fa-solid fa-list-check text-amber-700"></i> 개별 응답 내역 및 소통 소명의견 목록
+                        <i class="fa-solid fa-list-check text-amber-700"></i> 개별 응답 내역 및 소통 의견 목록
                     </span>
                     <span id="individualResponseCount" class="text-xs bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full font-semibold">총 0건</span>
                 </div>
@@ -569,7 +572,7 @@
         </div>
     </div>
 
-    <!-- Confirm Action Modal (Replaces browser confirm) -->
+    <!-- Confirm Action Modal -->
     <div id="confirmModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden backdrop-blur-sm p-4 no-print">
         <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl border border-red-100 transform transition-all">
             <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl mx-auto mb-3">
@@ -604,23 +607,46 @@
             updateSubmissionBadge();
         });
 
-        async function initFirebaseSync() {
-            if (!window.db || !window.auth) return;
+        async function ensureAuth() {
+            if (!window.auth) return null;
+            if (window.auth.currentUser) return window.auth.currentUser;
             try {
-                // Rule 3: Auth Before Queries
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await window.signInWithCustomToken(window.auth, __initial_auth_token);
+                    const userCred = await window.signInWithCustomToken(window.auth, __initial_auth_token);
+                    return userCred.user;
                 } else {
-                    await window.signInAnonymously(window.auth);
+                    const userCred = await window.signInAnonymously(window.auth);
+                    return userCred.user;
+                }
+            } catch (e) {
+                console.error("Auth failed:", e);
+                return null;
+            }
+        }
+
+        async function initFirebaseSync() {
+            const badge = document.getElementById('cloudStatusBadge');
+            
+            if (!window.db || !window.auth || !window.isConfigValid) {
+                if (badge) {
+                    badge.className = "text-[11px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md font-bold flex items-center gap-1";
+                    badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-700"></i> 파이어베이스 키 미입력 (로컬 저장중)';
+                }
+                return;
+            }
+
+            try {
+                const user = await ensureAuth();
+                if (!user) {
+                    if (badge) {
+                        badge.className = "text-[11px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md font-bold flex items-center gap-1";
+                        badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-700"></i> 파이어베이스 인증 실패';
+                    }
+                    return;
                 }
 
-                const user = window.auth.currentUser;
-                if (!user) return;
-
-                // Rule 1: Strict Paths - /artifacts/{appId}/public/data/submissions
                 const submissionsCol = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'submissions');
 
-                // Rule 2: Simple Query & Realtime Listener with Error Callback
                 window.onSnapshot(submissionsCol, (snapshot) => {
                     firebaseSubmissions = [];
                     snapshot.forEach((docSnap) => {
@@ -635,17 +661,15 @@
                         renderStatistics();
                     }
 
-                    const badge = document.getElementById('cloudStatusBadge');
                     if (badge) {
                         badge.className = "text-[11px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold flex items-center gap-1";
-                        badge.innerHTML = '<i class="fa-solid fa-cloud-check text-emerald-600"></i> 실시간 서버 연동';
+                        badge.innerHTML = '<i class="fa-solid fa-cloud-check text-emerald-600"></i> 실시간 서버 연동 완료';
                     }
                 }, (error) => {
                     console.error("Firestore onSnapshot error:", error);
-                    const badge = document.getElementById('cloudStatusBadge');
                     if (badge) {
-                        badge.className = "text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-bold flex items-center gap-1";
-                        badge.innerHTML = '<i class="fa-solid fa-hard-drive text-amber-700"></i> 로컬 모드';
+                        badge.className = "text-[11px] bg-red-100 text-red-800 px-2 py-0.5 rounded-md font-bold flex items-center gap-1";
+                        badge.innerHTML = '<i class="fa-solid fa-lock text-red-700"></i> 파이어베이스 규칙/설정 오류';
                     }
                 });
             } catch (err) {
@@ -653,7 +677,6 @@
             }
         }
 
-        // Request Stats view with password protection
         function requestStatsAccess() {
             if (isAdminAuthenticated) {
                 switchTab('stats');
@@ -707,7 +730,6 @@
             }
         }
 
-        // Tab Switching
         function switchTab(tab) {
             const surveyContainer = document.getElementById('surveyContainer');
             const statsContainer = document.getElementById('statsContainer');
@@ -736,7 +758,6 @@
             const form = e.target;
             const formData = new FormData(form);
 
-            // Extract scores
             const q1_score = parseInt(formData.get('q1_score') || '0');
             const q2_score = parseInt(formData.get('q2_score') || '0');
             const q3_score = parseInt(formData.get('q3_score') || '0');
@@ -747,7 +768,6 @@
                 return;
             }
 
-            // Months multi-select
             const monthsChecked = [];
             form.querySelectorAll('input[name="q2_months"]:checked').forEach(cb => {
                 monthsChecked.push(cb.value);
@@ -778,7 +798,6 @@
             showModal('제출 완료', '소중한 가을소풍 만족도 의견이 실시간으로 등록되었습니다. 감사합니다!', 'fa-circle-check', 'text-green-600 bg-green-100');
         }
 
-        // Retrieve combined Firestore / LocalStorage submissions
         function getSubmissions() {
             if (firebaseSubmissions && firebaseSubmissions.length > 0) {
                 return firebaseSubmissions;
@@ -791,20 +810,27 @@
         }
 
         async function saveSubmission(data) {
-            // Local backup
             const currentLocal = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             currentLocal.push(data);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(currentLocal));
 
-            // Cloud Firestore save
-            if (window.db && window.auth && window.auth.currentUser) {
+            if (window.db && window.auth && window.isConfigValid) {
                 try {
-                    const submissionsCol = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'submissions');
-                    await window.addDoc(submissionsCol, data);
+                    const user = await ensureAuth();
+                    if (user) {
+                        const submissionsCol = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'submissions');
+                        await window.addDoc(submissionsCol, data);
+                        return true;
+                    }
                 } catch (err) {
                     console.error("Cloud save error:", err);
+                    showModal('클라우드 저장 실패', '파이어베이스 서버로 전송하지 못했습니다. 파이어베이스 규칙(테스트 모드)을 확인해보세요.', 'fa-triangle-exclamation', 'text-amber-600 bg-amber-100');
+                    return false;
                 }
+            } else {
+                showModal('로컬 저장 안내', '파이어베이스 키가 설정되지 않아 이 휴대폰에만 임시 저장되었습니다. 깃허브 업로드 전 index.html에 본인의 파이어베이스 키를 꼭 입력해주세요!', 'fa-circle-info', 'text-blue-600 bg-blue-100');
             }
+            return false;
         }
 
         function updateSubmissionBadge() {
@@ -816,7 +842,6 @@
             const confirmed = await customConfirm('전체 데이터 초기화', '저장된 모든 설문 제출 내역을 정말 삭제하고 초기화하시겠습니까?');
             if (!confirmed) return;
 
-            // Clear Firestore
             if (window.db && window.auth && window.auth.currentUser) {
                 try {
                     const submissionsCol = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'submissions');
@@ -829,7 +854,6 @@
                 }
             }
 
-            // Clear local storage
             localStorage.removeItem(STORAGE_KEY);
             firebaseSubmissions = [];
             updateSubmissionBadge();
@@ -871,7 +895,6 @@
                 return;
             }
 
-            // Calculations
             let q1Sum = 0, q2Sum = 0, q3Sum = 0, q4Sum = 0;
             const monthCounts = { '5월': 0, '6월': 0, '10월': 0, '11월': 0 };
 
@@ -906,7 +929,6 @@
             itemAvgs.sort((a, b) => b.avg - a.avg);
             document.getElementById('statBestItem').innerText = `${itemAvgs[0].name} (${itemAvgs[0].avg}점)`;
 
-            // Render Chart 1: Item Averages
             const ctxAvg = document.getElementById('chartAverages').getContext('2d');
             if (chartAvgInstance) chartAvgInstance.destroy();
 
@@ -933,7 +955,6 @@
                 }
             });
 
-            // Render Chart 2: Preferred Months
             const ctxMonth = document.getElementById('chartMonths').getContext('2d');
             if (chartMonthInstance) chartMonthInstance.destroy();
 
@@ -955,7 +976,6 @@
                 }
             });
 
-            // Render Individual Responses & Detailed Cards
             const individualContainer = document.getElementById('individualList');
             individualContainer.innerHTML = '';
             document.getElementById('individualResponseCount').innerText = `총 ${totalCount}건`;
