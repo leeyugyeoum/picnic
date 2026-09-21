@@ -1,4 +1,4 @@
-/<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -24,14 +24,14 @@
         // =========================================================================
         // ★ [중요] 파이어베이스 콘솔에서 복사한 본인의 설정값(firebaseConfig)을 아래에 넣으세요 ★
         // =========================================================================
-        const firebaseConfig = {
-  apiKey: "AIzaSyCh4RZkcL3DlltILG0KBRTy0qjuXStKtgc",
-  authDomain: "picnic-d3a17.firebaseapp.com",
-  projectId: "picnic-d3a17",
-  storageBucket: "picnic-d3a17.firebasestorage.app",
-  messagingSenderId: "538164182795",
-  appId: "1:538164182795:web:00a9074e2ae3861b82ac0e"
-};
+        const myRealFirebaseConfig = {
+            apiKey: "AIzaSyCh4RZkcL3DlltILG0KBRTy0qjuXStKtgc",
+            authDomain: "picnic-d3a17.firebaseapp.com",
+            projectId: "picnic-d3a17",
+            storageBucket: "picnic-d3a17.firebasestorage.app",
+            messagingSenderId: "538164182795",
+            appId: "1:538164182795:web:00a9074e2ae3861b82ac0e"
+        };
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'byelnuri-fall-survey-2026';
         
@@ -629,8 +629,9 @@
             
             if (!window.db || !window.auth || !window.isConfigValid) {
                 if (badge) {
-                    badge.className = "text-[11px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md font-bold flex items-center gap-1";
-                    badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-700"></i> 파이어베이스 키 미입력 (로컬 저장중)';
+                    badge.className = "text-[11px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md font-bold flex items-center gap-1 cursor-pointer";
+                    badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-700"></i> 파이어베이스 키 미입력 (터치하여 안내)';
+                    badge.onclick = () => showModal('파이어베이스 연동 안내', 'GitHub의 index.html 파일 20번째 줄 근처 myRealFirebaseConfig에 본인의 파이어베이스 키를 넣으셔야 실시간 모으기가 작동합니다.', 'fa-key', 'text-amber-600 bg-amber-100');
                 }
                 return;
             }
@@ -664,12 +665,14 @@
                     if (badge) {
                         badge.className = "text-[11px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold flex items-center gap-1";
                         badge.innerHTML = '<i class="fa-solid fa-cloud-check text-emerald-600"></i> 실시간 서버 연동 완료';
+                        badge.onclick = null;
                     }
                 }, (error) => {
                     console.error("Firestore onSnapshot error:", error);
                     if (badge) {
-                        badge.className = "text-[11px] bg-red-100 text-red-800 px-2 py-0.5 rounded-md font-bold flex items-center gap-1";
-                        badge.innerHTML = '<i class="fa-solid fa-lock text-red-700"></i> 파이어베이스 규칙/설정 오류';
+                        badge.className = "text-[11px] bg-red-100 text-red-800 px-2 py-0.5 rounded-md font-bold flex items-center gap-1 cursor-pointer";
+                        badge.innerHTML = '<i class="fa-solid fa-lock text-red-700"></i> 데이터베이스 규칙 오류 (터치)';
+                        badge.onclick = () => showModal('파이어베이스 규칙 오류', '파이어베이스 콘솔 > Firestore Database > 규칙 탭에서 allow read, write: if true; 로 설정되어 있는지 확인해 주세요.', 'fa-lock', 'text-red-600 bg-red-100');
                     }
                 });
             } catch (err) {
