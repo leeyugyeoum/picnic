@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 별누리와 함께한 가을소풍 만족도 조사서</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for Statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                        },
+                        paper: {
+                            bg: '#fbf9f4',
+                            header: '#e3d2ad',
+                            border: '#bcab88',
+                            light: '#f4ece0',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f1ebd9;
+            background-image: radial-gradient(#d6c29a 0.75px, transparent 0.75px), radial-gradient(#d6c29a 0.75px, #f1ebd9 0.75px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+        }
+
+        /* Custom Radio Button styling for paper survey table */
+        .rating-radio {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border: 2px solid #8c7853;
+            border-radius: 50%;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+            background-color: #ffffff;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .rating-radio:checked {
+            border-color: #d97706;
+            background-color: #fff;
+        }
+
+        .rating-radio:checked::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background-color: #d97706;
+            border-radius: 50%;
+        }
+
+        .rating-radio:hover {
+            border-color: #d97706;
+            transform: scale(1.1);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1ebd9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c8b695;
+            border-radius: 4px;
+        }
+
+        /* Exact Paper Print Formatting */
+        @media print {
+            body {
+                background: none !important;
+                padding: 0 !important;
+                color: #000 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            
+            /* Hide survey container if printing stats */
+            body.print-mode-stats #surveyContainer {
+                display: none !important;
+            }
+            body.print-mode-stats #statsContainer {
+                display: block !important;
+            }
+            body.print-mode-stats .stats-no-print {
+                display: none !important;
+            }
+
+            /* Hide stats container if printing survey */
+            body.print-mode-survey #statsContainer {
+                display: none !important;
+            }
+            body.print-mode-survey #surveyContainer {
+                display: block !important;
+            }
+
+            .print-paper {
+                box-shadow: none !important;
+                border: 2px solid #555 !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 1.5rem !important;
+                background: #fff !important;
+                border-radius: 0 !important;
+            }
+            .rating-radio {
+                border: 1.5px solid #000 !important;
+            }
+            .rating-radio:checked::after {
+                background-color: #000 !important;
+            }
+            textarea, input[type="text"] {
+                border-bottom: 1px solid #ccc !important;
+                border-top: none !important;
+                border-left: none !important;
+                border-right: none !important;
+                background: transparent !important;
+                resize: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen py-6 px-3 sm:px-6 text-gray-800">
+
+    <!-- Top Action Bar (No-Print) -->
+    <div class="max-w-4xl mx-auto mb-5 no-print flex flex-wrap justify-between items-center gap-3 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-amber-200">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                <i class="fa-solid fa-tree"></i>
+            </div>
+            <div>
+                <h2 class="font-bold text-gray-900 text-lg leading-tight">국공립 별누리 어린이집</h2>
+                <p class="text-xs text-amber-800 font-medium">2026 가을소풍 만족도 조사 시스템</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <button id="btnSurveyView" onclick="switchTab('survey')" class="px-4 py-2 text-sm font-semibold rounded-xl bg-amber-600 text-white shadow-sm hover:bg-amber-700 transition-all flex items-center gap-1.5">
+                <i class="fa-solid fa-file-pen"></i> 설문 작성
+            </button>
+            <button id="btnStatsView" onclick="requestStatsAccess()" class="px-4 py-2 text-sm font-semibold rounded-xl bg-amber-100/70 text-amber-900 hover:bg-amber-200 transition-all flex items-center gap-1.5 relative">
+                <i class="fa-solid fa-lock text-xs text-amber-700 mr-0.5" id="adminLockIcon"></i>
+                <i class="fa-solid fa-chart-column"></i> 결과 통계 (<span id="submissionCountBadge">0</span>건)
+            </button>
+            <button onclick="printCurrentSurvey()" class="px-3.5 py-2 text-sm font-medium rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition-all flex items-center gap-1.5 bg-white">
+                <i class="fa-solid fa-print"></i> 빈 서식 인쇄
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN SURVEY PAPER CONTAINER -->
+    <main id="surveyContainer" class="max-w-4xl mx-auto">
+        <div class="print-paper bg-[#fbf9f4] border-2 border-[#bcab88] rounded-2xl p-5 sm:p-9 shadow-2xl relative">
+            
+            <!-- Header Title Box -->
+            <div class="text-center mb-6">
+                <div class="inline-block bg-[#e3d2ad] border border-[#a8956e] px-6 sm:px-10 py-3 rounded-xl shadow-sm">
+                    <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#3a2d18] tracking-tight">
+                        2026 별누리와 함께한 가을소풍 만족도 조사서
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Greeting / Announcement Box -->
+            <div class="bg-[#f4ece0] border border-[#d3c29e] rounded-xl p-4 sm:p-5 mb-6 text-gray-800 leading-relaxed text-sm sm:text-base space-y-2">
+                <p class="font-medium">
+                    안녕하세요, <span class="font-bold text-amber-900">별누리 어린이집</span>입니다.
+                </p>
+                <p>
+                    비가오지만 시원했던 날씨와 함께 편백나무로 가득한 <span class="font-semibold text-amber-900 underline decoration-amber-500 decoration-2">‘썬트리휴’</span>에서 우리 아이들과 함께 소중하고 즐거운 가을소풍을 다녀왔습니다. 소중한 시간 내어 소풍에 관심과 응원을 보내주신 모든 학부모님께 진심으로 감사드립니다.
+                </p>
+                <p>
+                    아이들과 함께 자연을 마음껏 느끼며 웃음꽃을 피운 시간들이 아이들에게도 오래도록 따뜻하고 행복한 추억으로 남기를 바랍니다. 앞으로 더욱 알차고 뜻깊은 행사로 찾아뵐 수 있도록 이번 가을소풍에 대한 만족도 조사를 진행하고자 하오니, 솔직한 의견을 작성해 주시면 감사하겠습니다.
+                </p>
+                <p class="text-xs sm:text-sm text-gray-600 italic pt-1">
+                    ※ 작성해주신 소중한 조사 결과는 추후 교육 활동 및 행사를 기획하는 데 귀중한 자료로 활용됩니다. 바쁘시겠지만 잠시 시간을 내어 참여를 부탁드립니다.
+                </p>
+            </div>
+
+            <form id="surveyForm" onsubmit="handleFormSubmit(event)">
+                
+                <div class="overflow-x-auto rounded-xl border border-[#ba9f6f] shadow-sm mb-6 bg-white">
+                    <table class="w-full text-left border-collapse text-sm sm:text-base">
+                        <thead>
+                            <tr class="bg-[#e3d2ad] text-[#3d2f17] border-b border-[#ba9f6f] text-center font-bold">
+                                <th class="py-3 px-2 border-r border-[#ba9f6f] w-12 sm:w-16">번호</th>
+                                <th class="py-3 px-4 border-r border-[#ba9f6f]">문항</th>
+                                <th class="py-3 px-1 border-r border-[#ba9f6f] w-12 sm:w-20 text-xs sm:text-sm">매우<br>만족</th>
+                                <th class="py-3 px-1 border-r border-[#ba9f6f] w-12 sm:w-20 text-xs sm:text-sm">조금<br>만족</th>
+                                <th class="py-3 px-1 border-r border-[#ba9f6f] w-12 sm:w-20 text-xs sm:text-sm">보통</th>
+                                <th class="py-3 px-1 border-r border-[#ba9f6f] w-12 sm:w-20 text-xs sm:text-sm">불만족</th>
+                                <th class="py-3 px-1 w-12 sm:w-20 text-xs sm:text-sm">매우<br>불만족</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#c8b695]">
+                            
+                            <!-- Question 1 -->
+                            <tr class="bg-[#fdfbf7]">
+                                <td class="py-4 px-2 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0]" rowspan="2">
+                                    1
+                                </td>
+                                <td class="py-3 px-4 border-r border-[#ba9f6f] font-semibold text-gray-800">
+                                    가을 소풍 프로그램 장소는 만족하시나요?
+                                </td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q1_score" value="5" class="rating-radio" required></td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q1_score" value="4" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q1_score" value="3" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q1_score" value="2" class="rating-radio"></td>
+                                <td class="text-center"><input type="radio" name="q1_score" value="1" class="rating-radio"></td>
+                            </tr>
+                            <tr class="bg-[#faf5eb]">
+                                <td colspan="6" class="py-3 px-4">
+                                    <label class="block text-xs sm:text-sm text-gray-700 font-medium mb-1">
+                                        만족하시지 못한 이유는 무엇일까요? 추천 장소가 있으시다면?
+                                    </label>
+                                    <input type="text" name="q1_reason" placeholder="의견이나 추천 장소를 적어주세요." class="w-full p-2 text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none">
+                                </td>
+                            </tr>
+
+                            <!-- Question 2 -->
+                            <tr class="bg-[#fdfbf7]">
+                                <td class="py-4 px-2 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0]" rowspan="2">
+                                    2
+                                </td>
+                                <td class="py-3 px-4 border-r border-[#ba9f6f] font-semibold text-gray-800">
+                                    가을 소풍 프로그램 진행 9월이 적절하다고 생각하시나요?
+                                </td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q2_score" value="5" class="rating-radio" required></td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q2_score" value="4" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q2_score" value="3" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q2_score" value="2" class="rating-radio"></td>
+                                <td class="text-center"><input type="radio" name="q2_score" value="1" class="rating-radio"></td>
+                            </tr>
+                            <tr class="bg-[#faf5eb]">
+                                <td colspan="6" class="py-3 px-4">
+                                    <div class="mb-1.5">
+                                        <label class="block text-xs sm:text-sm text-gray-700 font-medium mb-1">
+                                            적절하지 않다고 생각하시는 이유는 무엇일까요? 어느 시기가 좋을까요?
+                                        </label>
+                                        <div class="flex flex-wrap items-center gap-3 my-1.5 text-xs sm:text-sm text-gray-800">
+                                            <span class="font-medium text-amber-900">희망 시기:</span>
+                                            <label class="inline-flex items-center gap-1 cursor-pointer"><input type="checkbox" name="q2_months" value="5월" class="rounded text-amber-600 focus:ring-amber-500"> 5월</label>
+                                            <label class="inline-flex items-center gap-1 cursor-pointer"><input type="checkbox" name="q2_months" value="6월" class="rounded text-amber-600 focus:ring-amber-500"> 6월</label>
+                                            <label class="inline-flex items-center gap-1 cursor-pointer"><input type="checkbox" name="q2_months" value="10월" class="rounded text-amber-600 focus:ring-amber-500"> 10월</label>
+                                            <label class="inline-flex items-center gap-1 cursor-pointer"><input type="checkbox" name="q2_months" value="11월" class="rounded text-amber-600 focus:ring-amber-500"> 11월</label>
+                                        </div>
+                                    </div>
+                                    <input type="text" name="q2_reason" placeholder="이유나 기타 희망 시기를 작성해주세요." class="w-full p-2 text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none">
+                                </td>
+                            </tr>
+
+                            <!-- Question 3 -->
+                            <tr class="bg-[#fdfbf7]">
+                                <td class="py-4 px-2 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0]" rowspan="2">
+                                    3
+                                </td>
+                                <td class="py-3 px-4 border-r border-[#ba9f6f] font-semibold text-gray-800">
+                                    가을 소풍 진행 프로그램 내용(밧줄놀이, 잠자리만들기, 무당벌레 만들기 등)은 만족하시나요?
+                                </td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q3_score" value="5" class="rating-radio" required></td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q3_score" value="4" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q3_score" value="3" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q3_score" value="2" class="rating-radio"></td>
+                                <td class="text-center"><input type="radio" name="q3_score" value="1" class="rating-radio"></td>
+                            </tr>
+                            <tr class="bg-[#faf5eb]">
+                                <td colspan="6" class="py-3 px-4">
+                                    <label class="block text-xs sm:text-sm text-gray-700 font-medium mb-1">
+                                        만족하시지 못한 이유는? 어떤 프로그램이 좋을지 추천하신다면?
+                                    </label>
+                                    <input type="text" name="q3_reason" placeholder="의견 및 추천 프로그램 활동을 적어주세요." class="w-full p-2 text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none">
+                                </td>
+                            </tr>
+
+                            <!-- Question 4 -->
+                            <tr class="bg-[#fdfbf7]">
+                                <td class="py-4 px-2 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0]" rowspan="2">
+                                    4
+                                </td>
+                                <td class="py-3 px-4 border-r border-[#ba9f6f] font-semibold text-gray-800">
+                                    가을 소풍 소요시간 (오전 10시 ~ 오후 2시까지)은 만족하시나요?
+                                </td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q4_score" value="5" class="rating-radio" required></td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q4_score" value="4" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q4_score" value="3" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q4_score" value="2" class="rating-radio"></td>
+                                <td class="text-center"><input type="radio" name="q4_score" value="1" class="rating-radio"></td>
+                            </tr>
+                            <tr class="bg-[#faf5eb]">
+                                <td colspan="6" class="py-3 px-4">
+                                    <label class="block text-xs sm:text-sm text-gray-700 font-medium mb-1">
+                                        만족하시지 못한 이유는? 어느 정도 시간이 적절할까요?
+                                    </label>
+                                    <input type="text" name="q4_reason" placeholder="소요시간에 대한 의견을 적어주세요." class="w-full p-2 text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none">
+                                </td>
+                            </tr>
+
+                            <!-- Question 5: Other Feedback (기타의견) -->
+                            <tr class="bg-[#fdfbf7]">
+                                <td class="py-4 px-2 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0]">
+                                    기타<br>의견
+                                </td>
+                                <td colspan="6" class="py-4 px-4">
+                                    <textarea name="q5_comment" rows="4" placeholder="어린이집 소풍 및 교육 활동에 대한 기타 따뜻한 한마디나 건의사항을 자유롭게 작성해 주세요." class="w-full p-3 text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none resize-y"></textarea>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Bottom Slogan & Footer -->
+                <div class="mt-8 pt-4 border-t border-amber-200/80 flex flex-col sm:flex-row justify-between items-center text-center sm:text-left gap-3">
+                    <div class="flex items-center gap-2 text-[#4a3a1f]">
+                        <div class="w-8 h-8 rounded-full bg-amber-400/80 flex items-center justify-center text-amber-900 font-bold text-sm">
+                            <i class="fa-solid fa-child-reaching"></i>
+                        </div>
+                        <span class="font-extrabold text-base sm:text-lg tracking-tight">
+                            사랑받고 사랑을 줄 수 있는 아이 국공립 별누리 어린이집
+                        </span>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-700 bg-amber-100/80 px-3 py-1 rounded-lg border border-amber-200">
+                        <i class="fa-solid fa-phone text-amber-700 mr-1"></i> T. 052-282-4342
+                    </div>
+                </div>
+
+                <!-- Submit Button Bar (No Print) -->
+                <div class="mt-8 text-center no-print flex justify-center gap-3">
+                    <button type="submit" class="px-8 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-base rounded-xl shadow-lg hover:from-amber-600 hover:to-amber-700 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> 설문 응답 제출하기
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </main>
+
+    <!-- STATISTICS DASHBOARD VIEW (Password protected) -->
+    <main id="statsContainer" class="max-w-4xl mx-auto hidden">
+        <div class="bg-white border-2 border-[#bcab88] rounded-2xl p-5 sm:p-8 shadow-xl">
+            
+            <!-- Admin View Header -->
+            <div class="flex flex-wrap justify-between items-center pb-5 mb-6 border-b border-gray-200 gap-3 stats-no-print">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-1 bg-amber-100 text-amber-900 rounded-lg text-xs font-bold">관리자 전용</span>
+                        <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-amber-500"></i> 만족도 조사 결과 및 관리
+                        </h2>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-1">학부모님들의 응답 통계 및 개별 제출 내역을 관리합니다.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="printStatsReport()" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-amber-500 text-white hover:bg-amber-600 transition-all shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-pdf"></i> 통계 보고서 인쇄
+                    </button>
+                    <button onclick="lockStatsView()" class="px-3 py-2 text-xs font-semibold rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all border border-gray-300">
+                        <i class="fa-solid fa-lock mr-1"></i> 잠금
+                    </button>
+                    <button onclick="clearAllSubmissions()" class="px-3 py-2 text-xs font-semibold rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-all border border-red-200">
+                        <i class="fa-solid fa-trash-can mr-1"></i> 전체 초기화
+                    </button>
+                </div>
+            </div>
+
+            <!-- Printable Header for Stats Report -->
+            <div class="hidden print:block text-center mb-6 pb-4 border-b-2 border-gray-800">
+                <h1 class="text-2xl font-bold text-gray-900">2026 별누리와 함께한 가을소풍 만족도 조사 통계 보고서</h1>
+                <p class="text-sm text-gray-600 mt-1">국공립 별누리 어린이집 [문의 T.052-282-4342]</p>
+            </div>
+
+            <!-- Overview Stats Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <div class="bg-amber-50/80 border border-amber-200 p-4 rounded-xl text-center">
+                    <p class="text-xs font-semibold text-amber-800 uppercase tracking-wider">총 응답 수</p>
+                    <p id="statTotalCount" class="text-3xl font-black text-amber-900 mt-1">0건</p>
+                </div>
+                <div class="bg-amber-50/80 border border-amber-200 p-4 rounded-xl text-center">
+                    <p class="text-xs font-semibold text-amber-800 uppercase tracking-wider">전체 평점 평균</p>
+                    <p id="statAverageScore" class="text-3xl font-black text-amber-900 mt-1">0.0 / 5.0</p>
+                </div>
+                <div class="bg-amber-50/80 border border-amber-200 p-4 rounded-xl text-center">
+                    <p class="text-xs font-semibold text-amber-800 uppercase tracking-wider">최고 만족 항목</p>
+                    <p id="statBestItem" class="text-base font-bold text-amber-900 mt-2 truncate">-</p>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="border border-gray-200 p-4 rounded-xl bg-gray-50/50">
+                    <h3 class="text-sm font-bold text-gray-700 mb-3 text-center">항목별 평균 점수 (5점 만점)</h3>
+                    <div class="h-60 relative">
+                        <canvas id="chartAverages"></canvas>
+                    </div>
+                </div>
+                <div class="border border-gray-200 p-4 rounded-xl bg-gray-50/50">
+                    <h3 class="text-sm font-bold text-gray-700 mb-3 text-center">문항 2: 가을소풍 희망 선호 달</h3>
+                    <div class="h-60 relative">
+                        <canvas id="chartMonths"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Individual Submissions & Detailed List -->
+            <div class="border border-gray-200 rounded-xl overflow-hidden mt-8">
+                <div class="bg-amber-100/70 border-b border-amber-200 px-4 py-3 font-bold text-gray-800 text-sm flex justify-between items-center stats-no-print">
+                    <span class="flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-amber-700"></i> 개별 응답 내역 및 소통 소명의견 목록
+                    </span>
+                    <span id="individualResponseCount" class="text-xs bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full font-semibold">총 0건</span>
+                </div>
+
+                <!-- Printable Title for Feedback Section -->
+                <div class="hidden print:block font-bold text-base text-gray-800 mb-3 border-b pb-1">
+                    [주요 서술형 의견 및 종합 모음]
+                </div>
+
+                <div id="individualList" class="divide-y divide-gray-200 p-4 space-y-4 bg-white max-h-[550px] overflow-y-auto">
+                    <p class="text-sm text-gray-500 text-center py-8">제출된 응답 내역이 없습니다.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Password Prompt Modal -->
+    <div id="passwordModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden backdrop-blur-sm p-4 no-print">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl border border-amber-200 transform transition-all">
+            <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-1">관리자 인증</h3>
+            <p class="text-xs text-gray-500 mb-4">통계 및 개별 내역 확인을 위해 비밀번호를 입력해주세요.</p>
+
+            <form onsubmit="handlePasswordSubmit(event)" class="space-y-4">
+                <input type="password" id="inputPassword" placeholder="비밀번호 입력" autofocus class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-center font-bold text-lg tracking-widest focus:ring-2 focus:ring-amber-500 outline-none">
+                <p id="passwordError" class="text-xs text-red-500 font-semibold hidden">비밀번호가 올바르지 않습니다.</p>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closePasswordModal()" class="w-1/2 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl text-sm hover:bg-gray-200 transition-all">
+                        취소
+                    </button>
+                    <button type="submit" class="w-1/2 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition-all shadow-md">
+                        확인
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- General Notification Modal -->
+    <div id="customModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden backdrop-blur-sm p-4 no-print">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl transform transition-all">
+            <div id="modalIcon" class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h3 id="modalTitle" class="text-lg font-bold text-gray-900 mb-1">안내</h3>
+            <p id="modalMessage" class="text-sm text-gray-600 mb-5">메시지 내용입니다.</p>
+            <button onclick="closeModal()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition-all">
+                확인
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        const STORAGE_KEY = 'byelnuri_fall_picnic_survey_2026';
+        const ADMIN_PASS = '2824342';
+        let isAdminAuthenticated = false;
+
+        let chartAvgInstance = null;
+        let chartMonthInstance = null;
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            updateSubmissionBadge();
+        });
+
+        // Request Stats view with password protection
+        function requestStatsAccess() {
+            if (isAdminAuthenticated) {
+                switchTab('stats');
+            } else {
+                openPasswordModal();
+            }
+        }
+
+        function openPasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            const input = document.getElementById('inputPassword');
+            const err = document.getElementById('passwordError');
+            input.value = '';
+            err.classList.add('hidden');
+            modal.classList.remove('hidden');
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.add('hidden');
+        }
+
+        function handlePasswordSubmit(e) {
+            e.preventDefault();
+            const inputPass = document.getElementById('inputPassword').value;
+            const err = document.getElementById('passwordError');
+
+            if (inputPass === ADMIN_PASS) {
+                isAdminAuthenticated = true;
+                closePasswordModal();
+                updateAdminIconState();
+                switchTab('stats');
+            } else {
+                err.classList.remove('hidden');
+            }
+        }
+
+        function lockStatsView() {
+            isAdminAuthenticated = false;
+            updateAdminIconState();
+            switchTab('survey');
+            showModal('잠금 설정', '관리자 세션이 종료되었습니다.', 'fa-lock', 'text-amber-700 bg-amber-100');
+        }
+
+        function updateAdminIconState() {
+            const icon = document.getElementById('adminLockIcon');
+            if (isAdminAuthenticated) {
+                icon.className = "fa-solid fa-unlock text-xs text-green-600 mr-0.5";
+            } else {
+                icon.className = "fa-solid fa-lock text-xs text-amber-700 mr-0.5";
+            }
+        }
+
+        // Tab Switching
+        function switchTab(tab) {
+            const surveyContainer = document.getElementById('surveyContainer');
+            const statsContainer = document.getElementById('statsContainer');
+            const btnSurveyView = document.getElementById('btnSurveyView');
+            const btnStatsView = document.getElementById('btnStatsView');
+
+            if (tab === 'survey') {
+                surveyContainer.classList.remove('hidden');
+                statsContainer.classList.add('hidden');
+
+                btnSurveyView.className = "px-4 py-2 text-sm font-semibold rounded-xl bg-amber-600 text-white shadow-sm hover:bg-amber-700 transition-all flex items-center gap-1.5";
+                btnStatsView.className = "px-4 py-2 text-sm font-semibold rounded-xl bg-amber-100/70 text-amber-900 hover:bg-amber-200 transition-all flex items-center gap-1.5";
+            } else {
+                surveyContainer.classList.add('hidden');
+                statsContainer.classList.remove('hidden');
+
+                btnSurveyView.className = "px-4 py-2 text-sm font-semibold rounded-xl bg-amber-100/70 text-amber-900 hover:bg-amber-200 transition-all flex items-center gap-1.5";
+                btnStatsView.className = "px-4 py-2 text-sm font-semibold rounded-xl bg-amber-600 text-white shadow-sm hover:bg-amber-700 transition-all flex items-center gap-1.5";
+
+                renderStatistics();
+            }
+        }
+
+        // Handle Form Submission
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+
+            // Extract scores
+            const q1_score = parseInt(formData.get('q1_score') || '0');
+            const q2_score = parseInt(formData.get('q2_score') || '0');
+            const q3_score = parseInt(formData.get('q3_score') || '0');
+            const q4_score = parseInt(formData.get('q4_score') || '0');
+
+            if (!q1_score || !q2_score || !q3_score || !q4_score) {
+                showModal('알림', '모든 평가 문항에 점수를 선택해 주세요.', 'fa-triangle-exclamation', 'text-amber-600 bg-amber-100');
+                return;
+            }
+
+            // Months multi-select
+            const monthsChecked = [];
+            form.querySelectorAll('input[name="q2_months"]:checked').forEach(cb => {
+                monthsChecked.push(cb.value);
+            });
+
+            const submission = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleString('ko-KR', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit'
+                }),
+                q1_score,
+                q1_reason: formData.get('q1_reason') || '',
+                q2_score,
+                q2_months: monthsChecked,
+                q2_reason: formData.get('q2_reason') || '',
+                q3_score,
+                q3_reason: formData.get('q3_reason') || '',
+                q4_score,
+                q4_reason: formData.get('q4_reason') || '',
+                q5_comment: formData.get('q5_comment') || ''
+            };
+
+            saveSubmission(submission);
+            form.reset();
+            updateSubmissionBadge();
+
+            showModal('제출 완료', '소중한 가을소풍 만족도 의견이 성공적으로 제출되었습니다. 감사합니다!', 'fa-circle-check', 'text-green-600 bg-green-100');
+        }
+
+        // Local Storage Management
+        function getSubmissions() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveSubmission(data) {
+            const current = getSubmissions();
+            current.push(data);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+        }
+
+        function updateSubmissionBadge() {
+            const count = getSubmissions().length;
+            document.getElementById('submissionCountBadge').innerText = count;
+        }
+
+        function clearAllSubmissions() {
+            if (confirm('저장된 모든 설문 조사 제출 데이터를 삭제하고 초기화하시겠습니까?')) {
+                localStorage.removeItem(STORAGE_KEY);
+                updateSubmissionBadge();
+                renderStatistics();
+                showModal('초기화 완료', '모든 제출 데이터가 깨끗하게 초기화되었습니다.', 'fa-circle-info', 'text-blue-600 bg-blue-100');
+            }
+        }
+
+        function renderStatistics() {
+            const list = getSubmissions();
+            const totalCount = list.length;
+
+            document.getElementById('statTotalCount').innerText = `${totalCount}건`;
+
+            if (totalCount === 0) {
+                document.getElementById('statAverageScore').innerText = '0.0 / 5.0';
+                document.getElementById('statBestItem').innerText = '-';
+                document.getElementById('individualList').innerHTML = '<p class="text-sm text-gray-500 text-center py-8">제출된 응답 내역이 없습니다.</p>';
+                document.getElementById('individualResponseCount').innerText = '총 0건';
+
+                if (chartAvgInstance) chartAvgInstance.destroy();
+                if (chartMonthInstance) chartMonthInstance.destroy();
+                return;
+            }
+
+            // Calculations
+            let q1Sum = 0, q2Sum = 0, q3Sum = 0, q4Sum = 0;
+            const monthCounts = { '5월': 0, '6월': 0, '10월': 0, '11월': 0 };
+
+            list.forEach(item => {
+                q1Sum += item.q1_score || 0;
+                q2Sum += item.q2_score || 0;
+                q3Sum += item.q3_score || 0;
+                q4Sum += item.q4_score || 0;
+
+                if (item.q2_months && Array.isArray(item.q2_months)) {
+                    item.q2_months.forEach(m => {
+                        if (monthCounts[m] !== undefined) monthCounts[m]++;
+                    });
+                }
+            });
+
+            const q1Avg = (q1Sum / totalCount).toFixed(1);
+            const q2Avg = (q2Sum / totalCount).toFixed(1);
+            const q3Avg = (q3Sum / totalCount).toFixed(1);
+            const q4Avg = (q4Sum / totalCount).toFixed(1);
+
+            const overallAvg = ((q1Sum + q2Sum + q3Sum + q4Sum) / (totalCount * 4)).toFixed(1);
+            document.getElementById('statAverageScore').innerText = `${overallAvg} / 5.0`;
+
+            const itemAvgs = [
+                { name: '1. 장소 (썬트리휴)', avg: parseFloat(q1Avg) },
+                { name: '2. 시기 (9월)', avg: parseFloat(q2Avg) },
+                { name: '3. 프로그램 내용', avg: parseFloat(q3Avg) },
+                { name: '4. 소요시간 (10~14시)', avg: parseFloat(q4Avg) }
+            ];
+
+            itemAvgs.sort((a, b) => b.avg - a.avg);
+            document.getElementById('statBestItem').innerText = `${itemAvgs[0].name} (${itemAvgs[0].avg}점)`;
+
+            // Render Chart 1: Item Averages
+            const ctxAvg = document.getElementById('chartAverages').getContext('2d');
+            if (chartAvgInstance) chartAvgInstance.destroy();
+
+            chartAvgInstance = new Chart(ctxAvg, {
+                type: 'bar',
+                data: {
+                    labels: ['1. 장소', '2. 시기(9월)', '3. 프로그램', '4. 소요시간'],
+                    datasets: [{
+                        label: '평균 점수',
+                        data: [q1Avg, q2Avg, q3Avg, q4Avg],
+                        backgroundColor: ['#f59e0b', '#d97706', '#b45309', '#92400e'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 0, max: 5, ticks: { stepSize: 1 } }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Render Chart 2: Preferred Months
+            const ctxMonth = document.getElementById('chartMonths').getContext('2d');
+            if (chartMonthInstance) chartMonthInstance.destroy();
+
+            chartMonthInstance = new Chart(ctxMonth, {
+                type: 'doughnut',
+                data: {
+                    labels: ['5월', '6월', '10월', '11월'],
+                    datasets: [{
+                        data: [monthCounts['5월'], monthCounts['6월'], monthCounts['10월'], monthCounts['11월']],
+                        backgroundColor: ['#fef3c7', '#fde68a', '#fbbf24', '#d97706']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Render Individual Responses & Detailed Cards
+            const individualContainer = document.getElementById('individualList');
+            individualContainer.innerHTML = '';
+            document.getElementById('individualResponseCount').innerText = `총 ${totalCount}건`;
+
+            list.slice().reverse().forEach((item, index) => {
+                const responseNumber = totalCount - index;
+                const scoreMap = { 5: '매우만족', 4: '조금만족', 3: '보통', 2: '불만족', 1: '매우불만족' };
+
+                const card = document.createElement('div');
+                card.className = "p-4 bg-amber-50/40 rounded-xl border border-amber-200/80 space-y-3";
+
+                card.innerHTML = `
+                    <div class="flex flex-wrap justify-between items-center pb-2 border-b border-amber-200/60 gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-amber-600 text-white font-bold text-xs flex items-center justify-center">
+                                #${responseNumber}
+                            </span>
+                            <span class="text-xs font-semibold text-gray-600">
+                                <i class="fa-regular fa-clock mr-1"></i>${item.timestamp}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full font-bold">
+                                평점: ${( (item.q1_score+item.q2_score+item.q3_score+item.q4_score)/4 ).toFixed(1)} / 5.0
+                            </span>
+                            <button onclick="printIndividualResponse(${item.id})" class="stats-no-print text-xs bg-white border border-gray-300 hover:bg-amber-100 text-gray-800 px-2.5 py-1 rounded-lg font-medium transition-all flex items-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-print text-amber-700"></i> 개별 인쇄
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-700 bg-white p-2.5 rounded-lg border border-amber-100">
+                        <div><strong>1. 장소:</strong> ${scoreMap[item.q1_score]} (${item.q1_score}점)</div>
+                        <div><strong>2. 시기:</strong> ${scoreMap[item.q2_score]} (${item.q2_score}점) ${item.q2_months && item.q2_months.length ? `[희망: ${item.q2_months.join(', ')}]` : ''}</div>
+                        <div><strong>3. 프로그램:</strong> ${scoreMap[item.q3_score]} (${item.q3_score}점)</div>
+                        <div><strong>4. 소요시간:</strong> ${scoreMap[item.q4_score]} (${item.q4_score}점)</div>
+                    </div>
+
+                    <div class="text-xs text-gray-800 space-y-1 pl-1">
+                        ${item.q1_reason ? `<div><span class="font-bold text-amber-900">[장소 의견]</span> ${escapeHtml(item.q1_reason)}</div>` : ''}
+                        ${item.q2_reason ? `<div><span class="font-bold text-amber-900">[시기 의견]</span> ${escapeHtml(item.q2_reason)}</div>` : ''}
+                        ${item.q3_reason ? `<div><span class="font-bold text-amber-900">[프로그램 의견]</span> ${escapeHtml(item.q3_reason)}</div>` : ''}
+                        ${item.q4_reason ? `<div><span class="font-bold text-amber-900">[시간 의견]</span> ${escapeHtml(item.q4_reason)}</div>` : ''}
+                        ${item.q5_comment ? `<div class="p-2 bg-amber-100/50 rounded border border-amber-200/60 font-medium"><span class="font-bold text-amber-900">[기타 소통 내용]</span> ${escapeHtml(item.q5_comment)}</div>` : ''}
+                    </div>
+                `;
+
+                individualContainer.appendChild(card);
+            });
+        }
+
+        function printCurrentSurvey() {
+            document.body.classList.remove('print-mode-stats');
+            document.body.classList.add('print-mode-survey');
+            window.print();
+        }
+
+        function printStatsReport() {
+            document.body.classList.remove('print-mode-survey');
+            document.body.classList.add('print-mode-stats');
+            window.print();
+        }
+
+        function printIndividualResponse(id) {
+            const list = getSubmissions();
+            const item = list.find(s => s.id === id);
+            if (!item) return;
+
+            // Fill the main survey form temporarily with item data, then trigger print
+            const form = document.getElementById('surveyForm');
+            form.reset();
+
+            // Set ratings
+            if (form[`q1_score`]) setRadioValue('q1_score', item.q1_score);
+            if (form[`q2_score`]) setRadioValue('q2_score', item.q2_score);
+            if (form[`q3_score`]) setRadioValue('q3_score', item.q3_score);
+            if (form[`q4_score`]) setRadioValue('q4_score', item.q4_score);
+
+            // Set inputs
+            if (form['q1_reason']) form['q1_reason'].value = item.q1_reason || '';
+            if (form['q2_reason']) form['q2_reason'].value = item.q2_reason || '';
+            if (form['q3_reason']) form['q3_reason'].value = item.q3_reason || '';
+            if (form['q4_reason']) form['q4_reason'].value = item.q4_reason || '';
+            if (form['q5_comment']) form['q5_comment'].value = item.q5_comment || '';
+
+            // Set months
+            if (item.q2_months && Array.isArray(item.q2_months)) {
+                form.querySelectorAll('input[name="q2_months"]').forEach(cb => {
+                    if (item.q2_months.includes(cb.value)) cb.checked = true;
+                });
+            }
+
+            // Switch view to survey and trigger print
+            switchTab('survey');
+            setTimeout(() => {
+                printCurrentSurvey();
+            }, 150);
+        }
+
+        function setRadioValue(name, val) {
+            const radio = document.querySelector(`input[name="${name}"][value="${val}"]`);
+            if (radio) radio.checked = true;
+        }
+
+        // Modal Helpers
+        function showModal(title, msg, iconClass = 'fa-circle-check', iconStyle = 'text-amber-600 bg-amber-100') {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = msg;
+            
+            const iconElem = document.getElementById('modalIcon');
+            iconElem.className = `w-12 h-12 rounded-full flex items-center justify-center text-xl mx-auto mb-3 ${iconStyle}`;
+            iconElem.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.add('hidden');
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
