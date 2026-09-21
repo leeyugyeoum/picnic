@@ -21,16 +21,24 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, collection, addDoc, getDocs, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global Firebase Configuration
+        // =========================================================================
+        // ★ [중요] 파이어베이스에서 발급받은 실제 설정(firebaseConfig)을 아래에 붙여넣으세요 ★
+        // =========================================================================
+        const myRealFirebaseConfig = {
+            apiKey: "여기에_파이어베이스_API_KEY_입력",
+            authDomain: "내프로젝트.firebaseapp.com",
+            projectId: "내프로젝트ID",
+            storageBucket: "내프로젝트.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
+        };
+
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'byelnuri-fall-survey-2026';
-        const firebaseConfig = {
-  apiKey: "AIzaSyCh4RZkcL3DlltILG0KBRTy0qjuXStKtgc",
-  authDomain: "picnic-d3a17.firebaseapp.com",
-  projectId: "picnic-d3a17",
-  storageBucket: "picnic-d3a17.firebasestorage.app",
-  messagingSenderId: "538164182795",
-  appId: "1:538164182795:web:00a9074e2ae3861b82ac0e"
-};
+        
+        // 내 실제 설정이 작성되어 있으면 우선 사용하고, 없으면 환경변수/기본값 사용
+        const firebaseConfig = (myRealFirebaseConfig.apiKey && !myRealFirebaseConfig.apiKey.includes("여기에"))
+            ? myRealFirebaseConfig
+            : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : myRealFirebaseConfig);
 
         try {
             const app = initializeApp(firebaseConfig);
@@ -96,8 +104,8 @@
         .rating-radio {
             appearance: none;
             -webkit-appearance: none;
-            width: 22px;
-            height: 22px;
+            width: 18px;
+            height: 18px;
             border: 2px solid #8c7853;
             border-radius: 50%;
             outline: none;
@@ -107,6 +115,13 @@
             background-color: #ffffff;
             display: inline-block;
             vertical-align: middle;
+        }
+
+        @media (min-width: 640px) {
+            .rating-radio {
+                width: 22px;
+                height: 22px;
+            }
         }
 
         .rating-radio:checked {
@@ -120,10 +135,17 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             background-color: #d97706;
             border-radius: 50%;
+        }
+
+        @media (min-width: 640px) {
+            .rating-radio:checked::after {
+                width: 12px;
+                height: 12px;
+            }
         }
 
         .rating-radio:hover {
@@ -266,128 +288,128 @@
             <form id="surveyForm" onsubmit="handleFormSubmit(event)">
                 
                 <div class="overflow-x-auto rounded-xl border border-[#ba9f6f] shadow-sm mb-6 bg-white">
-                    <table class="w-full text-left border-collapse text-sm sm:text-base">
+                    <table class="w-full text-left border-collapse table-fixed text-xs sm:text-base">
                         <thead>
                             <tr class="bg-[#e3d2ad] text-[#3d2f17] border-b border-[#ba9f6f] text-center font-bold">
-                                <th class="py-3 px-2 border-r border-[#ba9f6f] w-12 sm:w-16">번호</th>
-                                <th class="py-3 px-4 border-r border-[#ba9f6f]">문항</th>
-                                <th class="py-3 px-1 border-r border-[#ba9f6f] w-12 sm:w-20 text-xs sm:text-sm">매우<br>만족</th>
-                                <th class="py-3 px-1 border-r border-[#ba9f6f] w-12 sm:w-20 text-xs sm:text-sm">조금<br>만족</th>
-                                <th class="py-3 px-1 border-r border-[#ba9f6f] w-12 sm:w-20 text-xs sm:text-sm">보통</th>
-                                <th class="py-3 px-1 border-r border-[#ba9f6f] w-12 sm:w-20 text-xs sm:text-sm">불만족</th>
-                                <th class="py-3 px-1 w-12 sm:w-20 text-xs sm:text-sm">매우<br>불만족</th>
+                                <th class="py-2 sm:py-3 px-1 border-r border-[#ba9f6f] w-[8%] text-[11px] sm:text-sm whitespace-nowrap">번호</th>
+                                <th class="py-2 sm:py-3 px-2 sm:px-4 border-r border-[#ba9f6f] w-[46%] text-xs sm:text-base break-keep">문항</th>
+                                <th class="py-2 sm:py-3 px-0.5 border-r border-[#ba9f6f] w-[9.2%] text-[10px] sm:text-xs md:text-sm leading-tight break-keep">매우<br class="sm:hidden">만족</th>
+                                <th class="py-2 sm:py-3 px-0.5 border-r border-[#ba9f6f] w-[9.2%] text-[10px] sm:text-xs md:text-sm leading-tight break-keep">조금<br class="sm:hidden">만족</th>
+                                <th class="py-2 sm:py-3 px-0.5 border-r border-[#ba9f6f] w-[9.2%] text-[10px] sm:text-xs md:text-sm leading-tight break-keep">보통</th>
+                                <th class="py-2 sm:py-3 px-0.5 border-r border-[#ba9f6f] w-[9.2%] text-[10px] sm:text-xs md:text-sm leading-tight break-keep">불만족</th>
+                                <th class="py-2 sm:py-3 px-0.5 w-[9.2%] text-[10px] sm:text-xs md:text-sm leading-tight break-keep">매우<br class="sm:hidden">불만족</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[#c8b695]">
                             
                             <!-- Question 1 -->
                             <tr class="bg-[#fdfbf7]">
-                                <td class="py-4 px-2 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0]" rowspan="2">
+                                <td class="py-3 sm:py-4 px-1 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0] text-xs sm:text-base" rowspan="2">
                                     1
                                 </td>
-                                <td class="py-3 px-4 border-r border-[#ba9f6f] font-semibold text-gray-800">
+                                <td class="py-2.5 sm:py-3 px-2 sm:px-4 border-r border-[#ba9f6f] font-semibold text-gray-800 text-xs sm:text-base break-keep leading-snug">
                                     가을 소풍 프로그램 장소는 만족하시나요?
                                 </td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q1_score" value="5" class="rating-radio" required></td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q1_score" value="4" class="rating-radio"></td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q1_score" value="3" class="rating-radio"></td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q1_score" value="2" class="rating-radio"></td>
-                                <td class="text-center"><input type="radio" name="q1_score" value="1" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q1_score" value="5" class="rating-radio" required></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q1_score" value="4" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q1_score" value="3" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q1_score" value="2" class="rating-radio"></td>
+                                <td class="text-center p-1"><input type="radio" name="q1_score" value="1" class="rating-radio"></td>
                             </tr>
                             <tr class="bg-[#faf5eb]">
-                                <td colspan="6" class="py-3 px-4">
-                                    <label class="block text-xs sm:text-sm text-gray-700 font-medium mb-1">
+                                <td colspan="6" class="py-2.5 sm:py-3 px-2 sm:px-4">
+                                    <label class="block text-xs sm:text-sm text-gray-700 font-medium mb-1 break-keep">
                                         만족하시지 못한 이유는 무엇일까요? 추천 장소가 있으시다면?
                                     </label>
-                                    <input type="text" name="q1_reason" placeholder="의견이나 추천 장소를 적어주세요." class="w-full p-2 text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none">
+                                    <input type="text" name="q1_reason" placeholder="의견이나 추천 장소를 적어주세요." class="w-full p-2 text-xs sm:text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none">
                                 </td>
                             </tr>
 
                             <!-- Question 2 -->
                             <tr class="bg-[#fdfbf7]">
-                                <td class="py-4 px-2 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0]" rowspan="2">
+                                <td class="py-3 sm:py-4 px-1 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0] text-xs sm:text-base" rowspan="2">
                                     2
                                 </td>
-                                <td class="py-3 px-4 border-r border-[#ba9f6f] font-semibold text-gray-800">
+                                <td class="py-2.5 sm:py-3 px-2 sm:px-4 border-r border-[#ba9f6f] font-semibold text-gray-800 text-xs sm:text-base break-keep leading-snug">
                                     가을 소풍 프로그램 진행 9월이 적절하다고 생각하시나요?
                                 </td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q2_score" value="5" class="rating-radio" required></td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q2_score" value="4" class="rating-radio"></td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q2_score" value="3" class="rating-radio"></td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q2_score" value="2" class="rating-radio"></td>
-                                <td class="text-center"><input type="radio" name="q2_score" value="1" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q2_score" value="5" class="rating-radio" required></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q2_score" value="4" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q2_score" value="3" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q2_score" value="2" class="rating-radio"></td>
+                                <td class="text-center p-1"><input type="radio" name="q2_score" value="1" class="rating-radio"></td>
                             </tr>
                             <tr class="bg-[#faf5eb]">
-                                <td colspan="6" class="py-3 px-4">
+                                <td colspan="6" class="py-2.5 sm:py-3 px-2 sm:px-4">
                                     <div class="mb-1.5">
-                                        <label class="block text-xs sm:text-sm text-gray-700 font-medium mb-1">
+                                        <label class="block text-xs sm:text-sm text-gray-700 font-medium mb-1 break-keep">
                                             적절하지 않다고 생각하시는 이유는 무엇일까요? 어느 시기가 좋을까요?
                                         </label>
-                                        <div class="flex flex-wrap items-center gap-3 my-1.5 text-xs sm:text-sm text-gray-800">
-                                            <span class="font-medium text-amber-900">희망 시기:</span>
+                                        <div class="flex flex-wrap items-center gap-2 sm:gap-3 my-1.5 text-xs sm:text-sm text-gray-800">
+                                            <span class="font-medium text-amber-900 whitespace-nowrap">희망 시기:</span>
                                             <label class="inline-flex items-center gap-1 cursor-pointer"><input type="checkbox" name="q2_months" value="5월" class="rounded text-amber-600 focus:ring-amber-500"> 5월</label>
                                             <label class="inline-flex items-center gap-1 cursor-pointer"><input type="checkbox" name="q2_months" value="6월" class="rounded text-amber-600 focus:ring-amber-500"> 6월</label>
                                             <label class="inline-flex items-center gap-1 cursor-pointer"><input type="checkbox" name="q2_months" value="10월" class="rounded text-amber-600 focus:ring-amber-500"> 10월</label>
                                             <label class="inline-flex items-center gap-1 cursor-pointer"><input type="checkbox" name="q2_months" value="11월" class="rounded text-amber-600 focus:ring-amber-500"> 11월</label>
                                         </div>
                                     </div>
-                                    <input type="text" name="q2_reason" placeholder="이유나 기타 희망 시기를 작성해주세요." class="w-full p-2 text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none">
+                                    <input type="text" name="q2_reason" placeholder="이유나 기타 희망 시기를 작성해주세요." class="w-full p-2 text-xs sm:text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none">
                                 </td>
                             </tr>
 
                             <!-- Question 3 -->
                             <tr class="bg-[#fdfbf7]">
-                                <td class="py-4 px-2 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0]" rowspan="2">
+                                <td class="py-3 sm:py-4 px-1 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0] text-xs sm:text-base" rowspan="2">
                                     3
                                 </td>
-                                <td class="py-3 px-4 border-r border-[#ba9f6f] font-semibold text-gray-800">
+                                <td class="py-2.5 sm:py-3 px-2 sm:px-4 border-r border-[#ba9f6f] font-semibold text-gray-800 text-xs sm:text-base break-keep leading-snug">
                                     가을 소풍 진행 프로그램 내용(밧줄놀이, 잠자리만들기, 무당벌레 만들기 등)은 만족하시나요?
                                 </td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q3_score" value="5" class="rating-radio" required></td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q3_score" value="4" class="rating-radio"></td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q3_score" value="3" class="rating-radio"></td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q3_score" value="2" class="rating-radio"></td>
-                                <td class="text-center"><input type="radio" name="q3_score" value="1" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q3_score" value="5" class="rating-radio" required></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q3_score" value="4" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q3_score" value="3" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q3_score" value="2" class="rating-radio"></td>
+                                <td class="text-center p-1"><input type="radio" name="q3_score" value="1" class="rating-radio"></td>
                             </tr>
                             <tr class="bg-[#faf5eb]">
-                                <td colspan="6" class="py-3 px-4">
-                                    <label class="block text-xs sm:text-sm text-gray-700 font-medium mb-1">
+                                <td colspan="6" class="py-2.5 sm:py-3 px-2 sm:px-4">
+                                    <label class="block text-xs sm:text-sm text-gray-700 font-medium mb-1 break-keep">
                                         만족하시지 못한 이유는? 어떤 프로그램이 좋을지 추천하신다면?
                                     </label>
-                                    <input type="text" name="q3_reason" placeholder="의견 및 추천 프로그램 활동을 적어주세요." class="w-full p-2 text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none">
+                                    <input type="text" name="q3_reason" placeholder="의견 및 추천 프로그램 활동을 적어주세요." class="w-full p-2 text-xs sm:text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none">
                                 </td>
                             </tr>
 
                             <!-- Question 4 -->
                             <tr class="bg-[#fdfbf7]">
-                                <td class="py-4 px-2 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0]" rowspan="2">
+                                <td class="py-3 sm:py-4 px-1 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0] text-xs sm:text-base" rowspan="2">
                                     4
                                 </td>
-                                <td class="py-3 px-4 border-r border-[#ba9f6f] font-semibold text-gray-800">
+                                <td class="py-2.5 sm:py-3 px-2 sm:px-4 border-r border-[#ba9f6f] font-semibold text-gray-800 text-xs sm:text-base break-keep leading-snug">
                                     가을 소풍 소요시간 (오전 10시 ~ 오후 2시까지)은 만족하시나요?
                                 </td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q4_score" value="5" class="rating-radio" required></td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q4_score" value="4" class="rating-radio"></td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q4_score" value="3" class="rating-radio"></td>
-                                <td class="text-center border-r border-[#ba9f6f]"><input type="radio" name="q4_score" value="2" class="rating-radio"></td>
-                                <td class="text-center"><input type="radio" name="q4_score" value="1" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q4_score" value="5" class="rating-radio" required></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q4_score" value="4" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q4_score" value="3" class="rating-radio"></td>
+                                <td class="text-center border-r border-[#ba9f6f] p-1"><input type="radio" name="q4_score" value="2" class="rating-radio"></td>
+                                <td class="text-center p-1"><input type="radio" name="q4_score" value="1" class="rating-radio"></td>
                             </tr>
                             <tr class="bg-[#faf5eb]">
-                                <td colspan="6" class="py-3 px-4">
-                                    <label class="block text-xs sm:text-sm text-gray-700 font-medium mb-1">
+                                <td colspan="6" class="py-2.5 sm:py-3 px-2 sm:px-4">
+                                    <label class="block text-xs sm:text-sm text-gray-700 font-medium mb-1 break-keep">
                                         만족하시지 못한 이유는? 어느 정도 시간이 적절할까요?
                                     </label>
-                                    <input type="text" name="q4_reason" placeholder="소요시간에 대한 의견을 적어주세요." class="w-full p-2 text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none">
+                                    <input type="text" name="q4_reason" placeholder="소요시간에 대한 의견을 적어주세요." class="w-full p-2 text-xs sm:text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none">
                                 </td>
                             </tr>
 
                             <!-- Question 5: Other Feedback (기타의견) -->
                             <tr class="bg-[#fdfbf7]">
-                                <td class="py-4 px-2 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0]">
+                                <td class="py-3 sm:py-4 px-1 text-center font-extrabold text-gray-800 border-r border-[#ba9f6f] bg-[#f4ece0] text-xs sm:text-base">
                                     기타<br>의견
                                 </td>
-                                <td colspan="6" class="py-4 px-4">
-                                    <textarea name="q5_comment" rows="4" placeholder="어린이집 소풍 및 교육 활동에 대한 기타 따뜻한 한마디나 건의사항을 자유롭게 작성해 주세요." class="w-full p-3 text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none resize-y"></textarea>
+                                <td colspan="6" class="py-3 sm:py-4 px-2 sm:px-4">
+                                    <textarea name="q5_comment" rows="4" placeholder="어린이집 소풍 및 교육 활동에 대한 기타 따뜻한 한마디나 건의사항을 자유롭게 작성해 주세요." class="w-full p-2.5 text-xs sm:text-sm rounded-md border border-[#c2ae8a] focus:ring-2 focus:ring-amber-500 bg-white outline-none resize-y"></textarea>
                                 </td>
                             </tr>
 
